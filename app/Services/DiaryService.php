@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class DiaryService
 {
@@ -11,6 +12,9 @@ class DiaryService
     public function __construct()
     {
         $this->storagePath = config('diary.storage_path');
+        if (!File::exists($this->storagePath)) {
+            File::put($this->storagePath, json_encode([]));
+        }
     }
 
     public function getAllEntries()
@@ -18,7 +22,6 @@ class DiaryService
         if (!File::exists($this->storagePath)) {
             return [];
         }
-
         $content = File::get($this->storagePath);
         return json_decode($content, true) ?? [];
     }
@@ -40,8 +43,10 @@ class DiaryService
             'content' => $data['content'],
             'mood' => $data['mood'],
         ];
+        $success = $this->saveEntries($entries);
 
-        $this->saveEntries($entries);
+        // Add this line for debugging
+        Log::info('Entry saved to file', ['success' => $success, 'path' => $this->storagePath]);
 
         return $newId;
     }
@@ -52,11 +57,8 @@ class DiaryService
         if (!isset($entries[$id])) {
             return false;
         }
-
         $entries[$id] = array_merge($entries[$id], $data);
-        $this->saveEntries($entries);
-
-        return true;
+        return $this->saveEntries($entries);
     }
 
     public function deleteEntry($id)
@@ -65,15 +67,14 @@ class DiaryService
         if (!isset($entries[$id])) {
             return false;
         }
-
         unset($entries[$id]);
-        $this->saveEntries($entries);
-
-        return true;
+        return $this->saveEntries($entries);
     }
 
     protected function saveEntries($entries)
     {
-        File::put($this->storagePath, json_encode($entries, JSON_PRETTY_PRINT));
+        $success = File::put($this->storagePath, json_encode($entries, JSON_PRETTY_PRINT));
+        Log::info('Saving entries', ['path' => $this->storagePath, 'success' => $success]);
+        return $success;
     }
 }

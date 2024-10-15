@@ -36,7 +36,8 @@ class DiaryController extends Controller
 
         $id = $this->diaryService->createEntry($validatedData);
 
-        return redirect()->route('diary.show', $id)->with('success', 'Tagebucheintrag erfolgreich erstellt!');
+        // Redirect to the index route (homepage) instead of the show route
+        return redirect()->route('diary.index')->with('success', 'Tagebucheintrag erfolgreich erstellt!');
     }
 
     public function show($id)
@@ -45,7 +46,6 @@ class DiaryController extends Controller
         if (!$entry) {
             abort(404);
         }
-
         return view('diary.show', compact('entry'));
     }
 
@@ -55,7 +55,6 @@ class DiaryController extends Controller
         if (!$entry) {
             abort(404);
         }
-
         return view('diary.edit', compact('entry'));
     }
 
@@ -69,22 +68,18 @@ class DiaryController extends Controller
         ]);
 
         $success = $this->diaryService->updateEntry($id, $validatedData);
-
         if (!$success) {
             abort(404);
         }
-
         return redirect()->route('diary.show', $id)->with('success', 'Tagebucheintrag erfolgreich aktualisiert!');
     }
 
     public function destroy($id)
     {
         $success = $this->diaryService->deleteEntry($id);
-
         if (!$success) {
             abort(404);
         }
-
         return redirect()->route('diary.index')->with('success', 'Tagebucheintrag erfolgreich gelöscht!');
     }
 }
